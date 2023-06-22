@@ -240,7 +240,7 @@ end sub
 sub checkFlame
   'if flame detected, run fan
   if voltageFlame < 50 then
-    locate 1,3
+    locate 0,10
     print "HOT"
     gosub runFan
     end if
