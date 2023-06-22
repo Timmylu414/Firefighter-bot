@@ -48,7 +48,7 @@ Do Forever
   gosub readSensors 'calculates values and displays them on LCD
   gosub checkFlame  'checks for flame
 
-  if lineCount = 3 then
+  if lineCount = 5 then
     gosub room3
   
   else 
@@ -60,7 +60,7 @@ loop
 sub room3
   'when exiting room3, turn left and move to the front wall, then turn left again
   if distanceLeft > 30 then 
-    gosub cornerTurn
+    gosub wideTurnL
     if distanceFront >= 10 then
       gosub forward
     else 
@@ -199,10 +199,6 @@ sub wideTurnL
   wait 500 ms
   gosub forward
   wait 150 ms 
-  gosub turnLeft 
-  wait 500 ms 
-  gosub forward 
-  wait 200 ms
 return
 end sub
 
@@ -231,7 +227,7 @@ sub readSensors
   print "..."
 
   locate 1,7
-  print "Room:"
+  print "line:"
   locate 1,10
   print (linecount)
 return
@@ -245,7 +241,7 @@ sub checkFlame
     gosub runFan
     end if
 return
-end sub
+End sub
 
 sub runFan
   'bot turns fan on and rotates left and right
