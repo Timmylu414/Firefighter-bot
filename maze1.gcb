@@ -45,6 +45,8 @@ Do Forever
   'main function
   CLS
   gosub checkLine 'checks if the bot is over a line and adds to the line count
+  gosub readSensors 'calculates values and displays them on LCD
+  gosub checkFlame  'checks for flame
 
   if lineCount = 3 then
     gosub room3
@@ -91,9 +93,6 @@ end sub
 
 sub keepWall
   'follows left wall
-  gosub readSensors 'calculates values and displays them on LCD
-  gosub checkFlame  'checks for flame
-
   if distanceFront < 15 and distanceFront > 4 then  'checks for wall in front of bot, turns right
     gosub rotRight
     wait 500 ms
@@ -114,7 +113,7 @@ return
 end sub
 
 sub forward
-  
+  'both motors run forwards
   set lmf on
   set lmb off
   set rmf on
@@ -124,7 +123,7 @@ return
 end Sub
 
 sub backward
-
+  'both motors run backwards
   set lmf off
   set lmb on
   set rmf off
@@ -134,7 +133,7 @@ return
 end sub
 
 sub rotRight
-
+  'motors run in opposite directions, rotating bot to the right
   set lmf on
   set lmb off
   set rmf off
@@ -144,7 +143,7 @@ return
 end sub
 
 sub rotLeft
-
+  'motors in opposite directions, rotating bot to the left
   set lmf off
   set lmb on
   set rmf on
@@ -154,7 +153,7 @@ return
 end sub
 
 sub turnRight
-
+  'left motor runs forwards
   set lmf on
   set lmb off
   set rmf off
@@ -164,7 +163,7 @@ return
 end sub
 
 sub turnLeft
-
+  'right motor runs forwards
   set lmf off
   set lmb off
   set rmf on
@@ -174,6 +173,7 @@ return
 end sub
 
 sub turnRightS
+  'bot turns slightly to the right
   gosub forward
   wait 2 ms
   gosub turnRight
@@ -182,6 +182,7 @@ return
 end sub
 
 sub turnLeftS
+  'bot turns slightly to the left
   gosub forward
   wait 2 ms
   gosub turnLeft
@@ -191,6 +192,7 @@ end sub
 
 
 sub wideTurnL
+  'bot turns left in increments
   gosub forward
   wait 150 ms
   gosub turnLeft
@@ -205,12 +207,14 @@ return
 end sub
 
 sub readSensors
+  'reads flame sensor voltage to detect flame, reads wall sensor voltages and computes distance
   voltageFlame = ReadAD(AN1)
   voltageFront = ReadAD(AN2)
   voltageLeft = ReadAD (AN3)
   distanceFront = (((6787/(voltageFront-3)))-4)/5
   distanceLeft = (((6787/(voltageLeft-3)))-4)/5
 
+  'displaying values on LCD
   locate 0,0
   print "F:"
   locate 0,3
@@ -227,13 +231,14 @@ sub readSensors
   print "..."
 
   locate 1,7
-  print "LC:"
+  print "Room:"
   locate 1,10
   print (linecount)
 return
 end sub
 
 sub checkFlame
+  'if flame detected, run fan
   if voltageFlame < 50 then
     locate 1,3
     print "HOT"
@@ -243,6 +248,7 @@ return
 end sub
 
 sub runFan
+  'bot turns fan on and rotates left and right
   set FM On 
   wait 300 ms 
   gosub rotLeft
@@ -252,8 +258,8 @@ sub runFan
 return 
 end sub
 
-
 sub checkLine
+  'adds to line count if light is detected 
   if LS=0 then
     lineCount +=1
     gosub forward
