@@ -1,0 +1,263 @@
+' 6/21/2023
+' firefighter robot - maze 1 
+' Timothy Lu and Sarah Bumstead 
+
+'chip definition
+#CHIP 16F18875
+
+'LCD definitions
+#define LCD_IO 4
+#define LCD_RS portd.0
+#define LCD_RW portd.1
+#define LCD_ENABLE portd.2
+#define LCD_DB4 portd.4
+#define LCD_DB5 portd.5
+#define LCD_DB6 portd.6
+#define LCD_DB7 portd.7
+
+
+'motor, fan, and sensor definitions
+#define LS porta.0
+#define IR porta.1
+#define frontWS porta.2
+#define leftWS porta.3
+#define lmb portb.0
+#define lmf portb.1
+#define rmb portb.2
+#define rmf portb.3
+#define FM portb.7
+
+'port directions
+DIR porta IN 
+DIR portb OUT 
+
+'variable definitions
+DIM distanceFront AS BYTE
+DIM voltageFront AS BYTE
+DIM distanceLeft AS BYTE
+DIM voltageLeft AS BYTE
+DIM voltageFlame AS BYTE
+DIM lineCount AS Integer
+
+lineCount = 0 'sets lineCount to zero
+
+Do Forever
+  'main function
+  CLS
+  gosub checkLine 'checks if the bot is over a line and adds to the line count
+
+  if lineCount = 3 then
+    gosub room3
+  
+  else 
+    gosub keepWall 'for rooms 1 and 2, follow left wall
+    end if
+
+loop
+
+sub room3
+  'when exiting room3, turn left and move to the front wall, then turn left again
+  if distanceLeft > 30 then 
+    gosub cornerTurn
+    if distanceFront >= 10 then
+      gosub forward
+    else 
+      gosub rotLeft
+      wait 500 ms
+      gosub room4
+      end if
+  Else
+    gosub keepWall
+    end if
+return 
+end sub
+
+sub room4
+  'bot moves forward until it detects the left wall of room 4
+  if distanceLeft > 25 and distanceLeft < 60 then 
+    gosub forward 
+    wait 100 ms 
+    gosub rotLeft
+    wait 500 ms 
+    gosub forward
+    wait 500 ms 
+    gosub keepWall
+  else 
+    gosub forward
+    end if
+
+return 
+end sub
+
+sub keepWall
+  'follows left wall
+  gosub readSensors 'calculates values and displays them on LCD
+  gosub checkFlame  'checks for flame
+
+  if distanceFront < 15 and distanceFront > 4 then  'checks for wall in front of bot, turns right
+    gosub rotRight
+    wait 500 ms
+
+  else if distanceLeft < 10 then
+    gosub turnRightS
+    
+  else if distanceLeft > 25 then  'if wall suddenly ends, makes a wide turn around the wall
+    gosub wideTurnL
+
+  else if distanceLeft >= 12 then
+    gosub turnLeftS   
+
+  else 
+    end if
+    
+return 
+end sub
+
+sub forward
+  
+  set lmf on
+  set lmb off
+  set rmf on
+  set rmb off
+
+return
+end Sub
+
+sub backward
+
+  set lmf off
+  set lmb on
+  set rmf off
+  set rmb on
+
+return
+end sub
+
+sub rotRight
+
+  set lmf on
+  set lmb off
+  set rmf off
+  set rmb on
+
+return
+end sub
+
+sub rotLeft
+
+  set lmf off
+  set lmb on
+  set rmf on
+  set rmb off
+
+return
+end sub
+
+sub turnRight
+
+  set lmf on
+  set lmb off
+  set rmf off
+  set rmb off
+
+return
+end sub
+
+sub turnLeft
+
+  set lmf off
+  set lmb off
+  set rmf on
+  set rmb off
+
+return
+end sub
+
+sub turnRightS
+  gosub forward
+  wait 2 ms
+  gosub turnRight
+  wait 6 ms
+return
+end sub
+
+sub turnLeftS
+  gosub forward
+  wait 2 ms
+  gosub turnLeft
+  wait 6 ms
+return
+end sub
+
+
+sub wideTurnL
+  gosub forward
+  wait 150 ms
+  gosub turnLeft
+  wait 500 ms
+  gosub forward
+  wait 150 ms 
+  gosub turnLeft 
+  wait 500 ms 
+  gosub forward 
+  wait 200 ms
+return
+end sub
+
+sub readSensors
+  voltageFlame = ReadAD(AN1)
+  voltageFront = ReadAD(AN2)
+  voltageLeft = ReadAD (AN3)
+  distanceFront = (((6787/(voltageFront-3)))-4)/5
+  distanceLeft = (((6787/(voltageLeft-3)))-4)/5
+
+  locate 0,0
+  print "F:"
+  locate 0,3
+  print (distanceFront)
+
+  locate 1,0
+  print "L:"
+  locate 1,3
+  print (distanceLeft)
+
+  locate 0,7
+  print "IR:"
+  locate 0,10
+  print "..."
+
+  locate 1,7
+  print "LC:"
+  locate 1,10
+  print (linecount)
+return
+end sub
+
+sub checkFlame
+  if voltageFlame < 50 then
+    locate 1,3
+    print "HOT"
+    gosub runFan
+    end if
+return
+end sub
+
+sub runFan
+  set FM On 
+  wait 300 ms 
+  gosub rotLeft
+  wait 300 ms
+  gosub rotRight
+  wait 300 ms 
+return 
+end sub
+
+
+sub checkLine
+  if LS=0 then
+    lineCount +=1
+    gosub forward
+    wait 200 ms
+    end if
+return
+end sub
