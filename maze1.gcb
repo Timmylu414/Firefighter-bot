@@ -48,8 +48,8 @@ Do Forever
   gosub readSensors 'calculates values and displays them on LCD
   gosub checkFlame  'checks for flame
 
-  if lineCount = 5 then
-    gosub room3
+  if lineCount = 6 then
+    gosub room4
   
   else 
     gosub keepWall 'for rooms 1 and 2, follow left wall
@@ -57,56 +57,41 @@ Do Forever
 
 loop
 
-sub room3
-  'when exiting room3, turn left and move to the front wall, then turn left again
-  if distanceLeft > 30 then 
-    gosub wideTurnL
-    if distanceFront >= 10 then
-      gosub forward
-    else 
-      gosub rotLeft
-      wait 500 ms
-      gosub room4
-      end if
-  Else
-    gosub keepWall
-    end if
-return 
-end sub
-
 sub room4
-  'bot moves forward until it detects the left wall of room 4
-  if distanceLeft > 25 and distanceLeft < 60 then 
-    gosub forward 
-    wait 100 ms 
-    gosub rotLeft
-    wait 500 ms 
+  'when exiting room3, turn left and move to the front wall, then turn left again
+  Do Until distanceFront <= 12
+    gosub readSensors
     gosub forward
-    wait 500 ms 
-    gosub keepWall
-  else 
-    gosub forward
-    end if
-
+  loop 
+  gosub rotLeft
+  wait 480 ms
+  gosub forward
+  wait 4000 ms 
+  lineCount += 1
 return 
 end sub
+
+
 
 sub keepWall
   'follows left wall
-  if distanceFront < 15 and distanceFront > 4 then  'checks for wall in front of bot, turns right
+  if distanceFront < 13 and distanceFront > 4 then  'checks for wall in front of bot, turns right  
     gosub rotRight
-    wait 500 ms
+    wait 450 ms 
+    gosub forward
+    wait 400 ms
 
-  else if distanceLeft < 10 then
+  else if distanceLeft < 12 then
     gosub turnRightS
     
   else if distanceLeft > 25 then  'if wall suddenly ends, makes a wide turn around the wall
-    gosub wideTurnL
+    gosub turnLeftS
 
-  else if distanceLeft >= 12 then
+  else if distanceLeft >= 14 then
     gosub turnLeftS   
 
   else 
+    gosub forward
     end if
     
 return 
@@ -152,6 +137,26 @@ sub rotLeft
 return
 end sub
 
+sub rotRightS
+  'motors run in opposite directions, rotating bot to the right slowly
+  gosub stop 
+  wait 4 ms
+  gosub rotRight
+  wait 2 ms 
+  
+return
+end sub
+
+sub rotLeftS
+  'motors in opposite directions, rotating bot to the left slowly 
+  gosub stop 
+  wait 4 ms 
+  gosub rotLeft
+  wait 2 ms 
+  
+return
+end sub
+
 sub turnRight
   'left motor runs forwards
   set lmf on
@@ -177,7 +182,7 @@ sub turnRightS
   gosub forward
   wait 2 ms
   gosub turnRight
-  wait 6 ms
+  wait 3 ms
 return
 end sub
 
@@ -186,19 +191,26 @@ sub turnLeftS
   gosub forward
   wait 2 ms
   gosub turnLeft
-  wait 6 ms
+  wait 3 ms
 return
 end sub
 
 
-sub wideTurnL
-  'bot turns left in increments
+sub turnLeftW
+  'bot makes a wide turn
   gosub forward
-  wait 150 ms
+  wait 3 ms
   gosub turnLeft
-  wait 500 ms
-  gosub forward
-  wait 150 ms 
+  wait 3 ms
+return
+end sub
+
+sub stop 
+  'stop both motors
+  set lmf off 
+  set lmb off 
+  set rmf off 
+  set rmb off 
 return
 end sub
 
@@ -224,33 +236,44 @@ sub readSensors
   locate 0,7
   print "IR:"
   locate 0,10
-  print "..."
+  print (voltageFlame)
 
   locate 1,7
   print "line:"
-  locate 1,10
+  locate 1,12
   print (linecount)
 return
 end sub
 
 sub checkFlame
   'if flame detected, run fan
-  if voltageFlame < 50 then
+  if voltageFlame < 6 then
     locate 0,10
-    print "HOT"
+    'print (voltageFlame)
     gosub runFan
+  else 
+    set FM off
     end if
 return
 End sub
 
 sub runFan
+  
+  gosub forward
+  wait 300 ms 
+  gosub rotLeftS
+  wait 225 ms 
   'bot turns fan on and rotates left and right
-  set FM On 
-  wait 300 ms 
-  gosub rotLeft
-  wait 300 ms
-  gosub rotRight
-  wait 300 ms 
+
+  
+  do until voltageFlame > 230
+    set FM On 
+    gosub rotRightS
+    wait 450 ms 
+    gosub rotLeftS
+    wait 450 ms 
+    gosub readSensors
+  loop
 return 
 end sub
 
