@@ -1,0 +1,485 @@
+' 6/21/2023
+' firefighter robot - maze 1 
+' Timothy Lu and Sarah Bumstead 
+
+'chip definition
+#CHIP 16F18875
+
+'LCD definitions
+#define LCD_IO 4
+#define LCD_RS portd.0
+#define LCD_RW portd.1
+#define LCD_ENABLE portd.2
+#define LCD_DB4 portd.4
+#define LCD_DB5 portd.5
+#define LCD_DB6 portd.6
+#define LCD_DB7 portd.7
+
+
+'motor, fan, and sensor definitions
+#define LS porta.0
+#define IR porta.1
+#define frontWS porta.2
+#define leftWS porta.3
+#define lmb portb.0
+#define lmf portb.1
+#define rmb portb.2
+#define rmf portb.3
+#define FM portb.7
+
+'port directions
+DIR porta IN 
+DIR portb OUT 
+
+'variable definitions
+DIM distanceFront AS BYTE
+DIM voltageFront AS BYTE
+DIM distanceLeft AS BYTE
+DIM voltageLeft AS BYTE
+DIM voltageFlame AS BYTE
+DIM lineCount AS Integer
+DIM rightTurns AS Integer
+
+lineCount = 0 'sets lineCount to zero
+rightTurns = 0
+
+main: 
+  'main function
+  CLS
+  gosub checkLine 'checks if the bot is over a line and adds to the line count
+  gosub readSensors 'calculates values and displays them on LCD
+  gosub checkFlame  'checks for flame
+
+  if lineCount = 2 then
+    gosub room1
+    
+
+  else if lineCount = 3 then
+    gosub room2
+  
+  else if lineCount = 5 then
+    gosub room3
+
+
+  else 
+    gosub keepWall 'for rooms 1 and 2, follow left wall
+    end if
+
+goto main
+
+sub room1
+  'back up and search for flame in room 1
+  gosub backward
+  wait 500 ms
+  gosub rotRight
+  wait 450 ms
+  gosub readSensors
+  if voltageFlame < 100 then 
+    gosub forward 
+    wait 300 ms 
+    gosub runFan 
+  else 
+    gosub rotLeft 
+    wait 550 ms
+    gosub forward
+    wait 600 ms 
+    lineCount += 1
+    end if  
+return 
+end sub
+
+sub room2
+    gosub readSensors
+    do until distanceFront < 15
+        gosub readSensors
+        gosub keepWall
+    loop 
+
+    gosub rotRight 
+    wait 450 ms
+
+    gosub forward 
+    wait 1100 ms 
+    gosub rotRight
+    wait 450 ms 
+    gosub readSensors
+    if voltageFlame < 100 then 
+        gosub forward 
+        wait 1600 ms 
+        gosub runFan 
+    else 
+        gosub rotLeft
+        wait 450 ms 
+        lineCount += 1
+        end if
+return 
+end sub 
+
+sub room2v2 
+    gosub forward 
+    wait 1500 ms 
+    gosub rotRight
+    wait 450 ms 
+    gosub readSensors
+    if voltageFlame < 100 then 
+         gosub forward 
+         wait 600 ms 
+         gosub runFan 
+    else 
+         gosub rotLeft
+         wait 450 ms 
+         lineCount += 1
+         end if
+
+goto main
+end sub 
+
+sub room3
+    
+    gosub readSensors
+    gosub rotLeft
+    wait 100 ms
+    do until distanceFront < 15
+        gosub readSensors
+        gosub forward
+    loop 
+    gosub rotLeft
+    wait 440 ms 
+    gosub readSensors
+    if voltageFlame < 100 then 
+        do until LS = 0
+            gosub forward
+            wait 1 ms 
+            gosub stop 
+            wait 1 ms 
+            gosub readSensors
+        loop
+
+        gosub backward
+        wait 300 ms 
+        gosub rotLeft
+        wait 250 ms
+        gosub runFan
+    else 
+      gosub rotLeft
+      wait 440 ms 
+      gosub forward
+      wait 300 ms 
+      do until lineCount = 6
+        gosub readSensors
+        gosub checkLine
+        gosub keepWall
+      loop 
+      gosub room4
+      end if
+return 
+end sub
+
+sub room4
+
+  gosub forward
+  wait 400 ms 
+  gosub rotLeft
+  wait 450 ms 
+  gosub forward
+  wait 300 ms 
+
+  do until lineCount = 7
+    gosub readSensors
+    gosub checkLine
+    gosub keepWall
+  loop 
+
+  gosub room4inside
+return
+end sub
+
+sub room4inside
+  lineCount += 1
+  gosub readSensors
+  gosub keepWall
+
+return
+end sub 
+
+sub spinFan
+  set FM on  
+  gosub rotRight
+  wait 5000 ms
+return 
+end sub
+
+sub rotRightS
+  gosub stop 
+  wait 1 ms
+  gosub rotRight
+  wait 1 ms 
+   
+return 
+end sub
+
+sub keepWall
+  'follows left wall
+  if distanceFront < 13 and distanceFront > 4 then  'checks for wall in front of bot, turns right  
+    gosub rotRight
+    wait 400 ms 
+    gosub forward
+    wait 50 ms
+    if lineCount = 3 then 
+        gosub forward
+        wait 500 ms
+        gosub room2v2
+        end if
+
+  else if distanceLeft < 13 then
+
+    gosub turnRightS
+
+    
+  else if distanceLeft > 25 then  'if wall suddenly ends, makes a wide turn around the wall
+    if lineCount = 8 then 
+      gosub forward
+      wait 200 ms
+      gosub rotLeft
+      wait 430 ms 
+      gosub forward 
+      wait 700 ms 
+
+      do until LS = 0
+        gosub forward
+        wait 3 ms 
+        gosub stop 
+        wait 1 ms 
+        gosub readSensors
+        loop
+  
+      gosub backward
+      wait 300 ms 
+      gosub rotLeft
+      wait 430 ms 
+      gosub forward 
+      wait 430 ms 
+
+      do until distanceFront < 14
+        gosub  readSensors
+        gosub forward
+        Loop 
+  
+      gosub forward 
+      wait 300 ms 
+      gosub rotRight
+      wait 450 ms 
+
+      gosub forward
+      wait 1000 ms 
+
+      gosub spinFan
+      wait 10000 ms
+
+    else
+      gosub turnLeftS
+      end if
+
+  else if distanceLeft >= 14 then
+    gosub turnLeftS   
+
+  else 
+    gosub forward
+    end if
+    
+return 
+end sub
+
+sub forward
+  'both motors run forwards
+  set lmf on
+  set lmb off
+  set rmf on
+  set rmb off
+
+return
+end Sub
+
+sub backward
+  'both motors run backwards
+  set lmf off
+  set lmb on
+  set rmf off
+  set rmb on
+
+return
+end sub
+
+sub rotRight
+  'motors run in opposite directions, rotating bot to the right
+  set lmf on
+  set lmb off
+  set rmf off
+  set rmb on
+
+return
+end sub
+
+sub rotLeft
+  'motors in opposite directions, rotating bot to the left
+  set lmf off
+  set lmb on
+  set rmf on
+  set rmb off
+
+return
+end sub
+
+sub rotRightS
+  'motors run in opposite directions, rotating bot to the right slowly
+  gosub stop 
+  wait 4 ms
+  gosub rotRight
+  wait 2 ms 
+  
+return
+end sub
+
+sub rotLeftS
+  'motors in opposite directions, rotating bot to the left slowly 
+  gosub stop 
+  wait 4 ms 
+  gosub rotLeft
+  wait 2 ms 
+  
+return
+end sub
+
+sub turnRight
+  'left motor runs forwards
+  set lmf on
+  set lmb off
+  set rmf off
+  set rmb off
+
+return
+end sub
+
+sub turnLeft
+  'right motor runs forwards
+  set lmf off
+  set lmb off
+  set rmf on
+  set rmb off
+
+return
+end sub
+
+sub turnRightS
+  'bot turns slightly to the right
+  gosub forward
+  wait 2 ms
+  gosub turnRight
+  wait 3 ms
+return
+end sub
+
+sub turnLeftS
+  'bot turns slightly to the left
+  gosub forward
+  wait 2 ms
+  gosub turnLeft
+  wait 4 ms
+return
+end sub
+
+
+sub turnLeftW
+  'bot makes a wide turn
+  gosub forward
+  wait 3 ms
+  gosub turnLeft
+  wait 3 ms
+return
+end sub
+
+sub stop 
+  'stop both motors
+  set lmf off 
+  set lmb off 
+  set rmf off 
+  set rmb off 
+return
+end sub
+
+sub readSensors
+  'reads flame sensor voltage to detect flame, reads wall sensor voltages and computes distance
+  voltageFlame = ReadAD(AN1)
+  voltageFront = ReadAD(AN2)
+  voltageLeft = ReadAD (AN3)
+  distanceFront = (((6787/(voltageFront-3)))-4)/5
+  distanceLeft = (((6787/(voltageLeft-3)))-4)/5
+
+  if lineCount = 6 then 
+    distanceFront = 20
+    end if
+
+  'displaying values on LCD
+  locate 0,0
+  print "F:"
+  locate 0,3
+  print (distanceFront)
+
+  locate 1,0
+  print "L:"
+  locate 1,3
+  print (distanceLeft)
+
+  locate 0,7
+  print "Loop:"
+  locate 0,12
+  print (loops)
+
+  locate 1,7
+  print "line:"
+  locate 1,12
+  print (linecount)
+return
+end sub
+
+sub checkFlame
+  'if flame detected, run fan
+  if voltageFlame < 45 then
+    locate 0,10
+    'print (voltageFlame)
+    gosub runFan
+  else 
+    set FM off
+    end if
+return
+End sub
+
+sub runFan
+  
+  gosub forward
+  wait 100 ms 
+  gosub rotLeftS
+  wait 225 ms 
+  'bot turns fan on and rotates left and right
+
+  
+  do until voltageFlame > 230
+    set FM On 
+    gosub rotRightS
+    wait 450 ms 
+    gosub rotLeftS
+    wait 450 ms 
+    gosub readSensors
+  loop
+return 
+end sub
+
+sub checkLine
+  'adds to line count if light is detected 
+  if LS=0 then
+    lineCount +=1
+    gosub forward
+    wait 200 ms
+    end if
+return
+end sub
