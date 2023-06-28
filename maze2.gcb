@@ -115,25 +115,6 @@ sub room2
 return 
 end sub 
 
-sub room2v2 
-    gosub forward 
-    wait 1500 ms 
-    gosub rotRight
-    wait 450 ms 
-    gosub readSensors
-    if voltageFlame < 100 then 
-         gosub forward 
-         wait 600 ms 
-         gosub runFan 
-    else 
-         gosub rotLeft
-         wait 450 ms 
-         lineCount += 1
-         end if
-
-goto main
-end sub 
-
 sub room3
     
     gosub readSensors
@@ -225,11 +206,6 @@ sub keepWall
     wait 400 ms 
     gosub forward
     wait 50 ms
-    if lineCount = 3 then 
-        gosub forward
-        wait 500 ms
-        gosub room2v2
-        end if
 
   else if distanceLeft < 13 then
 
