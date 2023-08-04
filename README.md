@@ -2,9 +2,9 @@
 
 Grade 12 Computer Engineering Technology Course (TEJ4MI) final project: firefighter robot designed to navigate mazes and extinguish lit candles. Assembly code is written with Great Cow Basic for a PIC16F18875 microcontroller (gcb files). 
 
-Maze 1: https://drive.google.com/file/d/1jv7utTUsPlyUJ7rxy1S5peHjXCrD1b-i/view?usp=sharing
+Maze 1: https://youtu.be/74PNc2OFNqw
 
-Maze 2: https://drive.google.com/file/d/1HHYtTKYDl08hJJYspublk0CJcmi-9Gae/view?usp=sharing
+Maze 2: https://www.youtube.com/shorts/7mLO7-of6CM 
 
 # Images
 ![IMG_7477](https://github.com/Timmylu414/Firefighter-bot/assets/75452456/d2a4db68-8db1-4f3d-bb11-854547991be2)
